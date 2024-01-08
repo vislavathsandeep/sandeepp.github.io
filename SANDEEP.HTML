@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Student Results</title>
+  <style>
+    /* Add your custom CSS styles here */
+    /* For simplicity, only basic styling is included */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1, h2, h3 {
+      margin: 0;
+    }
+    form {
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Student Results</h1>
+    <form id="roll-number-form">
+      <label for="roll-number-input">Enter Roll Number:</label>
+      <input type="text" id="roll-number-input" required>
+      <label for="password-input">Enter Roll Number as Password:</label>
+      <input type="password" id="password-input" placeholder="Enter Roll Number" required>
+      <label for="semester-select">Select Semester:</label>
+      <select id="semester-select" required>
+        <option value="" disabled selected>Select Semester</option>
+        <option value="Semester 1">Semester 1</option>
+        <option value="Semester 2">Semester 2</option>
+        <option value="Semester 3">Semester 3</option>
+        <option value="Semester 4">Semester 4</option>
+        <!-- Add more options for other semesters -->
+      </select>
+      <button type="submit">View Results</button>
+      <button type="button" id="share-button">Share Results</button>
+      <button type="button" id="download-button">Download Results</button>
+    </form>
+    <div id="results-container"></div>
+  </div>
+
+  <script>
+    const studentData = {
+      '21R11A6901': {
+        'Name': 'PAHLAVI',
+        'Semester 1': {
+          'ENG': {'Grade': 'A', 'Credits': 3},
+          'BEM': {'Grade': 'O', 'Credits': 4},
+          'AP': {'Grade': 'A', 'Credits': 3},
+          'EC': {'Grade': 'A', 'Credits': 3},
+          'PPS-1': {'Grade': 'A', 'Credits': 2},
+          'PPS-1LAB': {'Grade': 'A+', 'Credits': 1},
+          'EC LAB': {'Grade': 'O', 'Credits': 1},
+          'ELS LAB': {'Grade': 'A', 'Credits': 1}
+        },
+        // Add more semesters if needed
+      },
+      // Add more students if needed
+    };
+
+    // Calculate CGPA for a semester
+    function calculateCGPA(grades) {
+      const gradePoints = {
+        'O': 10.0,
+        'A+': 9.0,
+        'A': 8.0,
+        'B+': 7.0,
+        'B': 6.0,
+        'C': 5,
+        'D': 4,
+        'F': '0'
+      };
+
+      const totalCredits = grades.reduce((total, subject) => total + subject.Credits, 0);
+      let totalGradePoints = 0;
+
+      grades.forEach(subject => {
+        totalGradePoints += gradePoints[subject.Grade] * subject.Credits;
+      });
+
+      const cgpa = totalGradePoints / totalCredits;
+
+      return cgpa.toFixed(2);
+    }
+
+    // Display results for a specific semester
+    function displayResults(rollNumber, password, semesterName) {
+      const resultsContainer = document.getElementById('results-container');
+
+      const student = studentData[rollNumber];
+
+      if (student && rollNumber === password) {
+        const semester = student[semesterName];
+
+        if (semester) {
+          resultsContainer.innerHTML = '';
+
+          const studentDiv = document.createElement('div');
+          studentDiv.classList.add('student');
+
+          const rollNumberHeading = document.createElement('h2');
+          rollNumberHeading.textContent = `Roll Number: ${rollNumber}`;
+
+          const studentNameHeading = document.createElement('h2');
+          studentNameHeading.textContent = `Student Name: ${student.Name}`;
+
+          const semesterHeading = document.createElement('h3');
+          semesterHeading.textContent = `Semester: ${semesterName}`;
+
+          const resultsTable = document.createElement('table');
+          resultsTable.classList.add('results-table');
+
+          const headerRow = document.createElement('tr');
+          const subjectHeader = document.createElement('th');
+          subjectHeader.textContent = 'Subject';
+          const gradeHeader = document.createElement('th');
+          gradeHeader.textContent = 'Grade';
+
+          headerRow.appendChild(subjectHeader);
+          headerRow.appendChild(gradeHeader);
+          resultsTable.appendChild(headerRow);
+
+          for (const subject in semester) {
+            if (subject !== 'Credits') {
+              const row = document.createElement('tr');
+              const subjectData = document.createElement('td');
+              subjectData.textContent = subject;
+              const gradeData = document.createElement('td');
+              gradeData.textContent = semester[subject].Grade;
+
+              row.appendChild(subjectData);
+              row.appendChild(gradeData);
+              resultsTable.appendChild(row);
+            }
+          }
+
+          const cgpa = calculateCGPA(Object.values(semester));
+          const cgpaRow = document.createElement('tr');
+          const cgpaData = document.createElement('td');
+          cgpaData.setAttribute('colspan', '2');
+          cgpaData.innerHTML = `<strong>CGPA:</strong> ${cgpa}`;
+
+          cgpaRow.appendChild(cgpaData);
+          resultsTable.appendChild(cgpaRow);
+
+          studentDiv.appendChild(rollNumberHeading);
+          studentDiv.appendChild(studentNameHeading);
+          studentDiv.appendChild(semesterHeading);
+          studentDiv.appendChild(resultsTable);
+
+          resultsContainer.appendChild(studentDiv);
+        } else {
+          resultsContainer.innerHTML = 'Semester not found';
+        }
+      } else {
+        resultsContainer.innerHTML = 'Invalid roll number or password';
+      }
+    }
+
+    // Attach event listener to form submit event
+    document.getElementById('roll-number-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const rollNumber = document.getElementById('roll-number-input').value;
+      const password = document.getElementById('password-input').value;
+      const semesterName = document.getElementById('semester-select').value;
+      displayResults(rollNumber, password, semesterName);
+    });
+
+    // Add the "Share" button functionality
+    document.getElementById('share-button').addEventListener('click', () => {
+      const rollNumber = document.getElementById('roll-number-input').value;
+      const password = document.getElementById('password-input').value;
+      const semesterName = document.getElementById('semester-select').value;
+      displayResults(rollNumber, password, semesterName);
+
+      const message = `Student Results\n\nRoll Number: ${rollNumber}\nName: ${studentData[rollNumber].Name}\nSemester: ${semesterName}\nCGPA: ${calculateCGPA(Object.values(studentData[rollNumber][semesterName]))}\n\nDetails: [Add your details here]`; // Modify this as needed
+
+      const whatsappLink = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      
+      // Open the link in a new window
+      window.open(whatsappLink, '_blank');
+    });
+
+    // Add the "Download" button functionality
+    document.getElementById('download-button').addEventListener('click', () => {
+      const rollNumber = document.getElementById('roll-number-input').value;
+      const password = document.getElementById('password-input').value;
+      const semesterName = document.getElementById('semester-select').value;
+      displayResults(rollNumber, password, semesterName);
+
+      const resultsContainer = document.getElementById('results-container');
+      const content = resultsContainer.innerText;
+
+      // Create a Blob with the content
+      const blob = new Blob([content], { type: 'text/plain' });
+
+      // Create a download link
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `Result_${rollNumber}_${semesterName}.txt`;
+
+      // Append the link to the body
+      document.body.appendChild(link);
+
+      // Trigger the click event
+      link.click();
+
+      // Remove the link from the body
+      document.body.removeChild(link);
+    });
+  </script>
+</body>
+</html>
